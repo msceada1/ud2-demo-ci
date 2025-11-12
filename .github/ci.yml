@@ -1,0 +1,40 @@
+# El nombre que veremos en la pestaña "Actions" de GitHub
+name: Node.js CI
+
+# El "disparador" (trigger)
+# Se ejecutará en push a 'main' y en Pull Requests que apunten a 'main'
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+# Los "trabajos" a ejecutar
+jobs:
+  # Definimos un único trabajo llamado "build"
+  build:
+    # La máquina virtual donde se ejecutará
+    runs-on: ubuntu-latest
+
+    # Los pasos secuenciales que debe ejecutar
+    steps:
+      # Paso 1: Descargar el código de nuestra rama
+      - name: Checkout del código
+        uses: actions/checkout@v3
+
+      # Paso 2: Configurar el entorno de Node.js (v18)
+      - name: Configurar Node.js v18
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          # Activar la caché de NPM para que 'npm ci' sea más rápido
+          cache: 'npm'
+      
+      # Paso 3: Instalar las dependencias (rápido y seguro)
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Paso 4: ¡Ejecutar los tests!
+      # Si este comando falla (código > 0), el workflow fallará
+      - name: Ejecutar tests
+        run: npm test
