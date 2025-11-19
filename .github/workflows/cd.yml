@@ -1,0 +1,54 @@
+name: CD Pipeline
+
+# 1. DISPARADOR (Trigger)
+# Se ejecuta en pushes directos a 'master'
+on:
+  push:
+    branches: [ master ]
+
+# 2. JOBS (Tareas)
+# Definimos los "trabajos" que se van a ejecutar
+jobs:
+
+  #--- JOB 1: BUILD & PUSH (CD) ---
+  build_and_push:
+    name: 1. Build & Push a GHCR (CD)
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v3
+
+      - name: Iniciar sesión en GitHub Container Registry (GHCR)
+        # 'secrets.GITHUB_TOKEN' es un token temporal y seguro que GitHub crea para nosotros
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }} # Tu nombre de usuario
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construir y Subir la imagen Docker
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true # ¡Importante! Le decimos que suba la imagen
+          # Esta es la etiqueta (tag) que Render espera:
+          # ghcr.io/tu-usuario/tu-repo/mi-servidor-web:latest
+          tags: ghcr.io/${{ github.repository }}/mi-servidor-web:latest 
+
+  #--- JOB 2: DEPLOY (CD) ---
+  deploy:
+    name: 2. Desplegar en Render (CD)
+    # Dependencia: Solo se ejecuta si 'build_and_push' ha terminado con éxito
+    needs: build_and_push
+    # Condición: Solo se ejecuta si es un PUSH a 'master'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Lanzar el Deploy Hook de Render
+        # 'secrets.RENDER_DEPLOY_HOOK' es el secreto que creamos en GitHub
+        run: curl "${{ secrets.RENDER_DEPLOY_HOOK }}"
