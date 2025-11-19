@@ -36,7 +36,7 @@ jobs:
           push: true # ¡Importante! Le decimos que suba la imagen
           # Esta es la etiqueta (tag) que Render espera:
           # ghcr.io/tu-usuario/tu-repo/mi-servidor-web:latest
-          tags: ghcr.io/${{ github.repository }}/mi-servidor-web:latest 
+          tags: ghcr.io/manuel/mi-servidor-web:latest 
 
   #--- JOB 2: DEPLOY (CD) ---
   deploy:
